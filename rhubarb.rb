@@ -1,3 +1,6 @@
+# Copyright (c) 2011 Daniel T. Swain
+# See the file license.txt for copying permissions
+
 require 'gserver'
 
 class Rhubarb < GServer

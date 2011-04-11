@@ -1,5 +1,8 @@
 #!/usr/bin/ruby
 
+# Copyright (c) 2011 Daniel T. Swain
+# See the file license.txt for copying permissions
+
 require 'socket'
 
 socket = TCPSocket.open('127.0.0.1',1234)
