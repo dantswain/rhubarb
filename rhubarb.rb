@@ -18,14 +18,24 @@ class Rhubarb < GServer
                  {:name => "ping"}
                 ]
 
-    @get_commands = []
-    @set_commands = []
+    verbose_cmd = {:name => "verbose", :setArgs => 1}
+    
+    @get_commands = [verbose_cmd]
+    @set_commands = [verbose_cmd]
 
-    @get_commands_indexed = []
-    @set_commands_indexed = []
+    @indexed_get_commands = []
+    @indexed_set_commands = []
 
     @index_max = 0
 
+  end
+
+  def get_command_from_set(command, set)
+    set.detect{|c| c[:name].downcase == command}
+  end
+
+  def get_responder_name_with_prefix(command, prefix)
+    prefix + command[0].chr.capitalize + command[1..command.size]
   end
 
   def welcomeMessage(args)
@@ -37,7 +47,7 @@ class Rhubarb < GServer
     return unknownCommand({:message => "Not Enough Arguments"}) unless words.size >= 3
 
     opwords = words[2..words.size]
-    responder = op + resp_def[:name].capitalize
+    responder = get_responder_name_with_prefix(resp_def[:name], op)
     
     if respond_to?(responder)
       if op == "set"
@@ -73,14 +83,15 @@ class Rhubarb < GServer
   end
 
   def respondToSet(words)
-    resp_def = @indexed_set_commands.detect{|c| c[:name] == words[1]}
+    resp_def = get_command_from_set(words[1], @indexed_set_commands)    
 
     if resp_def
       respondToIndexedOp(words, "set", resp_def)
     else
-      resp_def = @set_commands.detect{|c| c[:name] == words[1]}
-      if resp_def && respond_to?("set" + words[1].capitalize)
-        send("set" + words[1].capitalize, words, resp_def)
+      resp_def = get_command_from_set(words[1], @set_commands)
+      responder = get_responder_name_with_prefix(resp_def[:name], "set")      
+      if resp_def && respond_to?(responder)
+        send(responder, words, resp_def)
       else
         unknownCommand({:message => "Unknown Set command"})
       end
@@ -90,16 +101,16 @@ class Rhubarb < GServer
       
   end
 
-  
   def respondToGet(words)
-    resp_def = @indexed_get_commands.detect{|c| c[:name] == words[1]}
+    resp_def = get_command_from_set(words[1], @indexed_get_commands)
 
     if resp_def
       respondToIndexedOp(words, "get", resp_def)
     else
-      resp_def = @get_commands.detect{|c| c[:name] == words[1]}
-      if resp_def && respond_to?("get" + words[1].capitalize)
-        send("get" + words[1].capitalize, words, resp_def)
+      resp_def = get_command_from_set(words[1], @get_commands)
+      responder = get_responder_name_with_prefix(resp_def[:name], "get")
+      if resp_def && respond_to?(responder)
+        send(responder, words, resp_def)
       else
         unknownCommand({:message => "Unknown Get command"})
       end
@@ -179,8 +190,8 @@ class Rhubarb < GServer
         line = line.downcase
         words = line.split(" ")
 
-        cmd_def = @commands.detect{|c| c[:name] == words[0]}
-        responder = "respondTo" + words[0].capitalize
+        cmd_def = get_command_from_set(words[0], @commands)
+        responder = get_responder_name_with_prefix(words[0], "respondTo")
 
         if respond_to?(responder)
           io.puts send(responder, words).strip
