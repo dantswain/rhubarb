@@ -55,8 +55,8 @@ class Rhubarb < GServer
         return "Indexing error" unless opwords.size % (nargs + 1) == 0
         response = ""
         (0..opwords.size-nargs-1).step(nargs+1).each{|w|
-          if opwords[w].to_i.to_s == opwords[w] && (0..resp_def[:max_index]).include?(opwords[w].to_i)
-            response += send(responder, opwords[w].to_i, opwords[w+1..w+nargs])
+          if opwords[w].to_i.to_s == opwords[w] && (0..resp_def[:maxIndex]).include?(opwords[w].to_i)
+            response += send(responder, opwords[w].to_i, opwords[w+1..w+nargs]) + " "
           end
         }
         response = "Indexing error" if response.strip.empty?
@@ -64,8 +64,8 @@ class Rhubarb < GServer
       elsif op == "get"
         do_all = opwords.include?("*")
         response = ""
-        (0..resp_def[:max_index]).each{|i|
-          response += send(responder, i) if opwords.include?(i.to_s) or do_all
+        (0..resp_def[:maxIndex]).each{|i|
+          response += send(responder, i) + " " if opwords.include?(i.to_s) or do_all
         }
         response = "Indexing error" if response.strip.empty?
         return response
