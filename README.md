@@ -83,4 +83,3 @@ and the response is reported.
   Goodbye
 
 Sending "S" tells the server to shutdown.  
-    
