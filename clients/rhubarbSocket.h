@@ -16,9 +16,13 @@
  *
  */
 
+#ifndef WIN32
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#else // defined WIN32
+#include <winsock.h>
+#endif
 
 #include <string.h>
 
@@ -78,6 +82,15 @@ rhubarb_socket_t getRhubarbSocket(const char* hostname,
     struct sockaddr_in sa;
     struct hostent* server;
 
+#ifdef WIN32
+    WSADATA wsaData;
+    if(WSAStartup(MAKEWORK(2, 0), &wsaData) != 0)
+    {
+        std::cerr << "Unable to start Winsock\n";
+        return -1;
+    }
+#endif    
+
     server = gethostbyname(hostname);
     if(!server)
     {
@@ -118,7 +131,12 @@ rhubarb_socket_t getRhubarbSocket(const char* hostname,
 
 void closeRhubarbSocket(rhubarb_socket_t sock)
 {
+#ifndef WIN32    
     close(sock);
+#else
+    closesocket(sock);
+    WSACleanup();
+#endif    
 }
 
 #endif // CP_SOCKET
