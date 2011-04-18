@@ -21,7 +21,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #else // defined WIN32
-#include <winsock.h>
+#include <winsock2.h>
+#pragma comment(lib, "Ws2_32.lib")
 #endif
 
 #include <string.h>
@@ -34,7 +35,7 @@ typedef int rhubarb_socket_t;
 std::string recvRhubarbLine(rhubarb_socket_t sock, int buff_size = 1024)
 {
     std::ostringstream ss;
-    char buffer[buff_size];
+    char* buffer = new char[buff_size];
 
     int nread = 0;
     int d = 0;
@@ -47,11 +48,16 @@ std::string recvRhubarbLine(rhubarb_socket_t sock, int buff_size = 1024)
         if(d > 0)
         {
             nread += d;
-            ss << buffer;
+			for(unsigned int i = 0; i < d; i++)
+			{
+			    ss << buffer[i];
+			}
             lastchar = buffer[d-1];
         }
         
     } while(nread < buff_size && d >= 0 && lastchar != 10);
+
+	delete[] buffer;
 
     std::string result = ss.str();
     result = result.substr(0, result.length()-1);
@@ -84,7 +90,7 @@ rhubarb_socket_t getRhubarbSocket(const char* hostname,
 
 #ifdef WIN32
     WSADATA wsaData;
-    if(WSAStartup(MAKEWORK(2, 0), &wsaData) != 0)
+    if(WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
     {
         std::cerr << "Unable to start Winsock\n";
         return -1;
@@ -101,9 +107,9 @@ rhubarb_socket_t getRhubarbSocket(const char* hostname,
     memset(&sa, 0, sizeof(sa));
 
     sa.sin_family = AF_INET;
-    bcopy((char *) server->h_addr,
-          (char *) &sa.sin_addr.s_addr,
-          server->h_length);
+    memcpy((char *) &sa.sin_addr.s_addr,
+		   (char *) server->h_addr,          
+           server->h_length);
     sa.sin_port = htons(port);
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
