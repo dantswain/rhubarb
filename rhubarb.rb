@@ -57,7 +57,7 @@ class Rhubarb < GServer
         nargs = resp_def[:setArgs]
         return "Indexing error" unless opwords.size % (nargs + 1) == 0
         response = ""
-        (0..opwords.size-nargs-1).step(nargs+1).each{|w|
+        (0..opwords.size-nargs-1).step(nargs+1){|w|
           if opwords[w].to_i.to_s == opwords[w] && (0..resp_def[:maxIndex]).include?(opwords[w].to_i)
             response += send(responder, opwords[w].to_i, opwords[w+1..w+nargs]) + " "
           end
