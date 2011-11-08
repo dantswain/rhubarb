@@ -8,29 +8,55 @@ class Rhubarb < GServer
   Shutdown_Command = "S";
   ClientQuit_Command = "Q";
   
-  def initialize(*args)
-    super(*args)
+  @@verbose = false
+  
+  @@client_id = 0
+  verbose_cmd = {:name => "verbose", :setArgs => 1}  
+  @@get_commands = [verbose_cmd]
+  @@set_commands = [verbose_cmd]
 
-    @@verbose = false
+  @@indexed_get_commands = []
+  @@indexed_set_commands = []
 
-    @@client_id = 0
+  @@commands = [
+                {:name => "get"},
+                {:name => "set"},
+                {:name => "ping"}
+               ]
+  @@index_max = 0  
+  
+  def self.add_get_command cmd_def
+    @@get_commands << cmd_def
+  end
 
-    @commands = [
-                 {:name => "get"},
-                 {:name => "set"},
-                 {:name => "ping"}
-                ]
+  def self.add_set_command cmd_def
+    @@set_commands << cmd_def
+  end
 
-    verbose_cmd = {:name => "verbose", :setArgs => 1}
-    
-    @get_commands = [verbose_cmd]
-    @set_commands = [verbose_cmd]
+  def self.add_get_set_command cmd_def
+    add_get_command cmd_def
+    add_set_command cmd_def
+  end
 
-    @indexed_get_commands = []
-    @indexed_set_commands = []
+  def self.add_indexed_set_command cmd_def
+    @@indexed_set_commands << cmd_def
+  end
+  
+  def self.add_indexed_get_command cmd_def
+    @@indexed_get_commands << cmd_def
+  end
 
-    @index_max = 0
+  def self.add_indexed_get_set_command cmd_def
+    add_indexed_get_command cmd_def
+    add_indexed_set_command cmd_def
+  end
 
+  def self.add_command cmd_def
+    @@commands << cmd_def
+  end
+
+  def client_id
+    @@client_id
   end
 
   def get_command_from_set(command, set)
@@ -86,12 +112,12 @@ class Rhubarb < GServer
   end
 
   def respondToSet(words)
-    resp_def = get_command_from_set(words[1], @indexed_set_commands)    
+    resp_def = get_command_from_set(words[1], @@indexed_set_commands)    
 
     if resp_def
       respondToIndexedOp(words, "set", resp_def)
     else
-      resp_def = get_command_from_set(words[1], @set_commands)
+      resp_def = get_command_from_set(words[1], @@set_commands)
       responder = get_responder_name_with_prefix(resp_def[:name], "set")      
       if resp_def && respond_to?(responder)
         send(responder, words, resp_def)
@@ -105,12 +131,12 @@ class Rhubarb < GServer
   end
 
   def respondToGet(words)
-    resp_def = get_command_from_set(words[1], @indexed_get_commands)
+    resp_def = get_command_from_set(words[1], @@indexed_get_commands)
 
     if resp_def
       respondToIndexedOp(words, "get", resp_def)
     else
-      resp_def = get_command_from_set(words[1], @get_commands)
+      resp_def = get_command_from_set(words[1], @@get_commands)
       responder = get_responder_name_with_prefix(resp_def[:name], "get")
       if resp_def && respond_to?(responder)
         send(responder, words, resp_def)
@@ -193,7 +219,7 @@ class Rhubarb < GServer
         line = line.downcase
         words = line.split(" ")
 
-        cmd_def = get_command_from_set(words[0], @commands)
+        cmd_def = get_command_from_set(words[0], @@commands)
         responder = get_responder_name_with_prefix(words[0], "respondTo")
 
         if respond_to?(responder)

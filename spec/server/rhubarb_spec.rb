@@ -1,44 +1,35 @@
 require 'spec_helper'
 
 class TestServer < Rhubarb
+  
+  add_get_set_command :name => "foo", :setArgs => 1
+  add_indexed_get_set_command :name => "arrayData", :setArgs => 3, :maxIndex => 1 
+  add_command :name => "fee"
 
-  def initialize(*args)
-    super(*args)
-
-    @foo = 42
-    @arrayData = [[1, 2, 3],[4, 5, 6]]
-
-    @get_commands << { :name => "foo", :setArgs => 1 }
-    @set_commands << { :name => "foo" }
-
-    @indexed_get_commands << { :name => "arrayData", :setArgs => 3, :maxIndex => 1 }
-    @indexed_set_commands << { :name => "arrayData", :setArgs => 3, :maxIndex => 1 }    
-
-    @commands << {:name => "fee"}
-
-  end
-
+  @@foo = 42
+  @@arrayData = [[1, 2, 3],[4, 5, 6]]
+  
   def welcomeMessage(args)
-    "Hi, client #{@@client_id}!"
+    "Hi, client #{client_id}!"
   end
 
   def getFoo(args, cmd_def)
-    "#{@foo}"
+    "#{@@foo}"
   end
 
   def setFoo(args, cmd_def)
-    @foo = args[2]
+    @@foo = args[2]
     getFoo(args, cmd_def)
   end
 
   def getArrayData(i)
-    "#{@arrayData[i][0]} #{@arrayData[i][1]} #{@arrayData[i][2]}"
+    "#{@@arrayData[i][0]} #{@@arrayData[i][1]} #{@@arrayData[i][2]}"
   end
 
   def setArrayData(i, args)
-    @arrayData[i][0] = args[0].to_f
-    @arrayData[i][1] = args[1].to_f
-    @arrayData[i][2] = args[2].to_f
+    @@arrayData[i][0] = args[0].to_f
+    @@arrayData[i][1] = args[1].to_f
+    @@arrayData[i][2] = args[2].to_f
     getArrayData(i)
   end
 
