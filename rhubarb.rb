@@ -59,16 +59,66 @@ class Rhubarb < GServer
     @@client_id
   end
 
-  def get_command_from_set(command, set)
-    set.detect{|c| c[:name].downcase == command}
-  end
-
-  def get_responder_name_with_prefix(command, prefix)
-    prefix + command[0].chr.capitalize + command[1..command.size]
-  end
-
   def welcomeMessage(args)
     "Welcome to Rhubarb, client #{args[0]}"
+  end
+
+  def getVerbose(args, cmd_def)
+    @@verbose ? "on" : "off"
+  end
+
+  def setVerbose(args, cmd_def)
+    if args[2] == "on"
+      @@verbose = true
+    end
+    if args[2] == "off"
+      @@verbose = false
+    end
+    getVerbose(args, cmd_def)
+  end
+  
+  def respondToPing(words)
+    "PONG!"
+  end
+  
+  private
+  
+  def respondToSet(words)
+    resp_def = get_command_from_set(words[1], @@indexed_set_commands)    
+
+    if resp_def
+      respondToIndexedOp(words, "set", resp_def)
+    else
+      resp_def = get_command_from_set(words[1], @@set_commands)
+      responder = get_responder_name_with_prefix(resp_def[:name], "set")      
+      if resp_def && respond_to?(responder)
+        send(responder, words, resp_def)
+      else
+        unknownCommand({:message => "Unknown Set command"})
+      end
+    end
+
+  rescue unknownCommand({:message => "Responding to Set command"})
+      
+  end
+  
+  def respondToGet(words)
+    resp_def = get_command_from_set(words[1], @@indexed_get_commands)
+
+    if resp_def
+      respondToIndexedOp(words, "get", resp_def)
+    else
+      resp_def = get_command_from_set(words[1], @@get_commands)
+      responder = get_responder_name_with_prefix(resp_def[:name], "get")
+      if resp_def && respond_to?(responder)
+        send(responder, words, resp_def)
+      else
+        unknownCommand({:message => "Unknown Get command"})
+      end
+    end
+
+  rescue unknownCommand({:message => "Responding to Get command"})
+      
   end
 
   def respondToIndexedOp(words, op, resp_def)
@@ -110,63 +160,7 @@ class Rhubarb < GServer
   rescue
     unknownCommand({:message => "Responding to indexed command"})
   end
-
-  def respondToSet(words)
-    resp_def = get_command_from_set(words[1], @@indexed_set_commands)    
-
-    if resp_def
-      respondToIndexedOp(words, "set", resp_def)
-    else
-      resp_def = get_command_from_set(words[1], @@set_commands)
-      responder = get_responder_name_with_prefix(resp_def[:name], "set")      
-      if resp_def && respond_to?(responder)
-        send(responder, words, resp_def)
-      else
-        unknownCommand({:message => "Unknown Set command"})
-      end
-    end
-
-  rescue unknownCommand({:message => "Responding to Set command"})
-      
-  end
-
-  def respondToGet(words)
-    resp_def = get_command_from_set(words[1], @@indexed_get_commands)
-
-    if resp_def
-      respondToIndexedOp(words, "get", resp_def)
-    else
-      resp_def = get_command_from_set(words[1], @@get_commands)
-      responder = get_responder_name_with_prefix(resp_def[:name], "get")
-      if resp_def && respond_to?(responder)
-        send(responder, words, resp_def)
-      else
-        unknownCommand({:message => "Unknown Get command"})
-      end
-    end
-
-  rescue unknownCommand({:message => "Responding to Get command"})
-      
-  end
-
-  def getVerbose(args, cmd_def)
-    @@verbose ? "on" : "off"
-  end
-
-  def setVerbose(args, cmd_def)
-    if args[2] == "on"
-      @@verbose = true
-    end
-    if args[2] == "off"
-      @@verbose = false
-    end
-    getVerbose(args, cmd_def)
-  end
   
-  def respondToPing(words)
-    "PONG!"
-  end
-
   def unknownCommand(def_info = {})
     info = {
       :method_name => "",
@@ -222,7 +216,7 @@ class Rhubarb < GServer
         cmd_def = get_command_from_set(words[0], @@commands)
         responder = get_responder_name_with_prefix(words[0], "respondTo")
 
-        if respond_to?(responder)
+        if respond_to?(responder, true)
           io.puts send(responder, words).strip
         else
           io.puts unknownCommand({:message => "Unknown primary command"})
@@ -238,5 +232,15 @@ class Rhubarb < GServer
       self.stop
     end
     
-   end
+  end
+
+  def get_command_from_set(command, set)
+    set.detect{|c| c[:name].downcase == command}
+  end
+
+  def get_responder_name_with_prefix(command, prefix)
+    prefix + command[0].chr.capitalize + command[1..command.size]
+  end
+  
+  
 end
