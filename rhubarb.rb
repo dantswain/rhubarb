@@ -121,33 +121,111 @@ class Rhubarb < GServer
       
   end
 
+  def moded_command? cmd_def
+    !cmd_def[:modes].nil?
+  end
+
+  def has_command_mode? cmd_def, mode
+    return false unless moded_command? cmd_def
+    !cmd_def[:modes][mode.to_sym].nil?
+  end
+
+  def num_args_needed opwords, cmd_def
+    if cmd_def[:modes]
+      mode = opwords[0].to_sym
+      if has_command_mode?(cmd_def, mode)
+        cmd_def[:modes][mode][:setArgs]
+      else
+        -1
+      end
+    else
+      cmd_def[:setArgs] || -1
+    end
+  end
+
+  def respondToIndexedSet(opwords, resp_def)
+
+    responder = get_responder_name_with_prefix(resp_def[:name], "set")
+
+    nargs = num_args_needed(opwords, resp_def) #resp_def[:setArgs]
+
+    if moded_command?(resp_def)
+      return "Unknown mode #{opwords[0]}" unless has_command_mode?(resp_def, opwords[0])
+      mode_setter = responder + "Mode"
+      return "Unable to set mode via #{mode_setter}" unless respond_to?(mode_setter)
+
+      mode_set = send(mode_setter, opwords[0])
+      return "Unable to set mode to #{opwords[0]}" unless mode_set
+
+      return "#{opwords[0]}" if opwords.size == 1
+      
+    end
+
+    needed_mod = nargs + 1 + (moded_command?(resp_def) ? 1 : 0)
+    return "Indexing error" unless opwords.size % (needed_mod) == 0
+    response = ""
+    start = moded_command?(resp_def) ? 1 : 0
+
+    (start..opwords.size-nargs-1).step(nargs+1) do |w|
+      #puts opwords[w]
+      if opwords[w].to_i.to_s == opwords[w] && (0..resp_def[:maxIndex]).include?(opwords[w].to_i)
+
+        args = []
+        if moded_command?(resp_def)
+          args = [opwords[0]]
+        end
+        args += opwords[w+1..w+nargs]
+
+        response += send(responder, opwords[w].to_i, args) + " "
+      end
+    end
+    response = "Indexing error" if response.strip.empty?
+    return response
+
+  rescue unknownCommand(:message => "Responding to indexed set")
+    
+  end
+
+  def respondToIndexedGet(opwords, resp_def)
+    responder = get_responder_name_with_prefix(resp_def[:name], "get")
+    
+    do_all = opwords.include?("*")
+    response = ""
+
+    if moded_command?(resp_def)
+      mode_responder = responder + "Mode"
+      unless respond_to?(mode_responder)
+        return "Unable to determine mode via #{mode_responder}"
+      end
+      mode = send(mode_responder)
+      unless has_command_mode?(resp_def, mode)
+        return "Invalid mode #{mode}"
+      end
+      response += mode.to_s + " "
+    end
+
+    (0..resp_def[:maxIndex]).each do |i|
+      response += send(responder, i) + " " if opwords.include?(i.to_s) or do_all
+    end
+    response = "Indexing error" if response.strip.empty?
+    return response
+
+  rescue unknownCommand(:message => "Responding to indexed get")
+    
+  end
+
   def respondToIndexedOp(words, op, resp_def)
 
     return unknownCommand({:message => "Not Enough Arguments"}) unless words.size >= 3
-
+    
     opwords = words[2..words.size]
     responder = get_responder_name_with_prefix(resp_def[:name], op)
-    
+
     if respond_to?(responder)
       if op == "set"
-        nargs = resp_def[:setArgs]
-        return "Indexing error" unless opwords.size % (nargs + 1) == 0
-        response = ""
-        (0..opwords.size-nargs-1).step(nargs+1){|w|
-          if opwords[w].to_i.to_s == opwords[w] && (0..resp_def[:maxIndex]).include?(opwords[w].to_i)
-            response += send(responder, opwords[w].to_i, opwords[w+1..w+nargs]) + " "
-          end
-        }
-        response = "Indexing error" if response.strip.empty?
-        return response
+        return respondToIndexedSet(opwords, resp_def)
       elsif op == "get"
-        do_all = opwords.include?("*")
-        response = ""
-        (0..resp_def[:maxIndex]).each{|i|
-          response += send(responder, i) + " " if opwords.include?(i.to_s) or do_all
-        }
-        response = "Indexing error" if response.strip.empty?
-        return response
+        return respondToIndexedGet(opwords, resp_def)
       else
         unkownCommand({:message => "Unknown indexed command"})
       end
@@ -235,7 +313,7 @@ class Rhubarb < GServer
   end
 
   def get_command_from_set(command, set)
-    set.detect{|c| c[:name].downcase == command}
+    set.detect{|c| c[:name].downcase == command.downcase}
   end
 
   def get_responder_name_with_prefix(command, prefix)
