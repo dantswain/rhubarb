@@ -21,16 +21,20 @@ class TestServer < Rhubarb
 
   add_indexed_get_set_command @@mode_cmd_def
 
-  @@foo = 42
-  @@arrayData = [[1, 2, 3],[4, 5, 6]]
+  def self.reset_data
+    @@foo = 42
+    @@arrayData = [[1, 2, 3],[4, 5, 6]]
 
-  @@mode_data = {
-    :mode2 => [["w", "x"], ["y", "z"]],
-    :mode3 => [["a", "b", "c"], ["d", "e", "f"]]
-  }
+    @@mode_data = {
+      :mode2 => [["w", "x"], ["y", "z"]],
+      :mode3 => [["a", "b", "c"], ["d", "e", "f"]]
+    }
 
-  @@mode = :mode2
+    @@mode = :mode2
+  end
 
+  reset_data
+    
   def welcomeMessage(args)
     "Hi, client #{client_id}!"
   end
@@ -46,7 +50,6 @@ class TestServer < Rhubarb
 
   def getArrayData(i)
     @@arrayData[i].join(" ")
-    #    "#{@@arrayData[i][0]} #{@@arrayData[i][1]} #{@@arrayData[i][2]}"
   end
 
   def setArrayData(i, args)
@@ -83,7 +86,8 @@ end
 
 describe Rhubarb do
 
-  before(:all) do
+  before(:each) do
+    TestServer.reset_data    
     @server = TestServer.new(1234, '127.0.0.1')
     @server.start
 
@@ -95,79 +99,119 @@ describe Rhubarb do
     @welcome.should match "Hi, client 1!\n"
   end
 
-  it "should respond to get foo" do
-    @sock.puts "get foo"
-    @sock.gets.to_i.should == 42 
+  describe "for a custom command" do
+    
+    it "should respond to fee" do
+      response_to("fee").should match "Fi!"
+    end
+
+  end
+  
+  describe "for simple data" do
+    
+    it "should respond to get foo" do
+      response_to("get foo").to_i.should == 42
+    end
+
+    it "should set foo" do
+      response_to("set foo 10.0").should match "10.0"
+      response_to("get foo").to_i.should == 10
+    end
+    
   end
 
-  it "should set foo" do
-    @sock.puts "set foo 10.0"
-    @sock.gets
-    @sock.puts "get foo"
-    @sock.gets.to_i.should == 10
+  describe "for array data" do
+    
+    it "should get" do
+      a = response_to("get arrayData 0").split.collect{ |i| i.to_i }
+      a[0].should == 1
+      a[1].should == 2
+      a[2].should == 3
+      a = response_to("get arrayData 1").split.collect{ |i| i.to_i }
+      a[0].should == 4
+      a[1].should == 5
+      a[2].should == 6
+    end
+
+    it "should set data" do
+      response_to("set arrayData 0 5.0 6.0 7.0").should match "5.0 6.0 7.0"
+      a = response_to("get arrayData 0").split.collect{ |i| i.to_i }
+      a[0].should == 5
+      a[1].should == 6
+      a[2].should == 7
+      response_to("set arrayData 1 7.0 8.0 9.0").should match "7.0 8.0 9.0"
+      a = response_to("get arrayData 1").split.collect{ |i| i.to_i }
+      a[0].should == 7
+      a[1].should == 8
+      a[2].should == 9
+    end
+
+    it "should get all array data" do
+      response_to("get arrayData *").should match "1 2 3 4 5 6"
+    end
+
+    it "should allow to set all of the data" do
+      response_to("set arrayData 0 -1 -2 -3 1 -4 -5 -6").
+        should match "-1.0 -2.0 -3.0 -4.0 -5.0 -6.0"
+      response_to("get arrayData *").
+        should match "-1.0 -2.0 -3.0 -4.0 -5.0 -6.0"        
+    end
+    
   end
 
-  it "should get arrayData" do
-    @sock.puts "get arrayData 0"
-    a = @sock.gets.split.collect{ |i| i.to_i }
-    a[0].should == 1
-    a[1].should == 2
-    a[2].should == 3
-  end
+  describe "for moded data" do
+    
+    it "should get data" do
+      response_to("get modeData 0").should match "mode2 w x"
+    end
 
-  it "should set arrayData" do
-    @sock.puts "set arrayData 0 5.0 6.0 7.0"
-    @sock.gets
-    @sock.puts "get arrayData 0"
-    a = @sock.gets.split.collect{ |i| i.to_i }
-    a[0].should == 5
-    a[1].should == 6
-    a[2].should == 7
-  end
+    it "should set data" do
+      response_to("set modeData mode2 0 1.0 2.0").should match "mode2 1.0 2.0"
+    end
 
-  it "should respond to fee" do
-    @sock.puts "fee"
-    @sock.gets.should match "Fi!"
-  end
+    it "should set data with a new mode" do
+      response_to("set modeData mode3 0 p q r").should match "mode3 p q r"
+    end
 
-  it "should get mode data" do
-    @sock.puts "get modeData 0"
-    @sock.gets.should match "mode2 w x"
-  end
+    it "should set the mode" do
+      response_to("set modeData mode3").should match "mode3"
+      response_to("get modeData 0").should match "mode3 a b c"
+    end
 
-  it "should set mode data" do
-    @sock.puts "set modeData mode2 0 1.0 2.0"
-    @sock.gets.should match "mode2 1.0 2.0"
-  end
+    it "should get all of the data" do
+      response_to("get modeData *").should match "mode2 w x y z"
+    end
 
-  it "should set mode data with a new mode" do
-    @sock.puts "set modeData mode3 0 p q r"
-    @sock.gets.should match "mode3 p q r"
-  end
+    it "should get all of the data after switching modes" do
+      response_to("set modeData mode3").should match "mode3"
+      response_to("get modeData *").should match "mode3 a b c d e f"
+    end
 
-  it "should set the mode" do
-    @sock.puts "set modeData mode2"
-    @sock.gets.should match "mode2"
-
-    @sock.puts "get modeData 0"
-    @sock.gets.should match "mode2 1.0 2.0"
+    it "should allow to set all data with the mode" do
+      response_to("set modeData mode3 0 l m n 1 g h i").
+        should match "l m n g h i"
+      response_to("get modeData *").
+        should match "l m n g h i"        
+    end
+    
   end
 
   it "should not time out" do
     1000.times do
-      @sock.puts "get arrayData 1"
-      a = @sock.gets.split.collect{ |i| i.to_i }
-      a[0].should == 4
-      a[1].should == 5
-      a[2].should == 6      
+      response_to("get arrayData 1").should match "4 5 6"
     end
   end
 
-  after(:all) do
+  after(:each) do
     @sock.puts "S"
     @sock.gets
     @sock.close
     @server.join
+  end
+
+  def response_to send_string
+    @sock.puts send_string
+    return @sock.gets
   end
   
 end

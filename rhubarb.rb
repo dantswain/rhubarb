@@ -161,21 +161,19 @@ class Rhubarb < GServer
       
     end
 
-    needed_mod = nargs + 1 + (moded_command?(resp_def) ? 1 : 0)
-    return "Indexing error" unless opwords.size % (needed_mod) == 0
+    needed_mod = nargs + 1# + (moded_command?(resp_def) ? 1 : 0)
+    check_size = opwords.size - (moded_command?(resp_def) ? 1 : 0)
+    return "Indexing error" unless check_size % (needed_mod) == 0
+    
     response = ""
+    response += "#{opwords[0]} " if moded_command?(resp_def)
+    
     start = moded_command?(resp_def) ? 1 : 0
 
     (start..opwords.size-nargs-1).step(nargs+1) do |w|
       #puts opwords[w]
       if opwords[w].to_i.to_s == opwords[w] && (0..resp_def[:maxIndex]).include?(opwords[w].to_i)
-
-        args = []
-        if moded_command?(resp_def)
-          args = [opwords[0]]
-        end
-        args += opwords[w+1..w+nargs]
-
+        args = opwords[w+1..w+nargs]
         response += send(responder, opwords[w].to_i, args) + " "
       end
     end
