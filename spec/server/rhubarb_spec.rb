@@ -202,6 +202,20 @@ describe Rhubarb do
     end
   end
 
+  it "should not time out with two clients" do
+    sock2 = TCPSocket.open('127.0.0.1', 1234)
+    sock2.gets # dump welcome message
+
+    1000.times do
+      p = Array.new(3).collect{ 3.0*(rand()-0.5) }
+      p_as_str = p.join(" ")
+      i = rand(1)
+      response_to("set arrayData #{i} #{p_as_str}").should match p_as_str
+      response_to("get arrayData #{i}", sock2).should match p_as_str
+    end
+    
+  end
+
   after(:each) do
     @sock.puts "S"
     @sock.gets
@@ -209,9 +223,9 @@ describe Rhubarb do
     @server.join
   end
 
-  def response_to send_string
-    @sock.puts send_string
-    return @sock.gets
+  def response_to(send_string, sock = @sock)
+    sock.puts send_string
+    return sock.gets
   end
   
 end
