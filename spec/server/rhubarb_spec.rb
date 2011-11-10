@@ -156,6 +156,11 @@ describe Rhubarb do
       response_to("get arrayData *").
         should match "-1.0 -2.0 -3.0 -4.0 -5.0 -6.0"        
     end
+
+    it "should get array data in the order in which it was requested" do
+      response_to("set arrayData 1 1 1 1 0 0 0 0").should match "1.0 1.0 1.0 0.0 0.0 0.0"
+      response_to("get arrayData 1 0").should match "1.0 1.0 1.0 0.0 0.0 0.0"
+    end
     
   end
 
@@ -192,6 +197,11 @@ describe Rhubarb do
         should match "l m n g h i"
       response_to("get modeData *").
         should match "l m n g h i"        
+    end
+
+    it "should get data in the order in which it was requested" do
+      response_to("set modeData mode2 0 a a 1 b b").should match "a a b b"
+      response_to("get modeData 1 0").should match "b b a a"
     end
     
   end

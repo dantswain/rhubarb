@@ -202,8 +202,13 @@ class Rhubarb < GServer
       response += mode.to_s + " "
     end
 
-    (0..resp_def[:maxIndex]).each do |i|
-      response += send(responder, i) + " " if opwords.include?(i.to_s) or do_all
+    indeces = opwords.reject do
+      |o| o.to_i.to_s != o && o.to_i > resp_def[:maxIndex] 
+    end.map{ |o| o.to_i }
+    indeces = (0..resp_def[:maxIndex]) if do_all
+
+    indeces.each do |i|
+      response += send(responder, i) + " "
     end
     response = "Indexing error" if response.strip.empty?
     return response
