@@ -32,6 +32,8 @@
 
 typedef int rhubarb_socket_t;
 
+const rhubarb_socket_t RHUBARB_SOCKET_NONE = -1;
+
 std::string recvRhubarbLine(rhubarb_socket_t sock, int buff_size = 1024)
 {
     std::ostringstream ss;
@@ -93,7 +95,7 @@ rhubarb_socket_t getRhubarbSocket(const char* hostname,
     if(WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
     {
         std::cerr << "Unable to start Winsock\n";
-        return -1;
+        return RHUBARB_SOCKET_NONE;
     }
 #endif    
 
@@ -101,7 +103,7 @@ rhubarb_socket_t getRhubarbSocket(const char* hostname,
     if(!server)
     {
         std::cerr << "Unable to determine hostname\n";
-        return -1;
+        return RHUBARB_SOCKET_NONE;
     } 
 
     memset(&sa, 0, sizeof(sa));
@@ -116,14 +118,14 @@ rhubarb_socket_t getRhubarbSocket(const char* hostname,
     if(sock < 0)
     {
         std::cerr << "Unable to create socket\n";
-        return -1;
+        return RHUBARB_SOCKET_NONE;
     }
 
     if(connect(sock, (struct sockaddr*) &sa, sizeof(sa)) < 0)
     {
         std::cerr << "Unable to connect to server " << hostname
                   << ":" << port << std::endl;
-        return -1;
+        return RHUBARB_SOCKET_NONE;
     }
 
     std::string motd = recvRhubarbLine(sock);
