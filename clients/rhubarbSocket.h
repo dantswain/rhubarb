@@ -34,7 +34,7 @@ typedef int rhubarb_socket_t;
 
 const rhubarb_socket_t RHUBARB_SOCKET_NONE = -1;
 
-std::string recvRhubarbLine(rhubarb_socket_t sock, int buff_size = 1024)
+inline std::string recvRhubarbLine(rhubarb_socket_t sock, int buff_size = 1024)
 {
     std::ostringstream ss;
     char* buffer = new char[buff_size];
@@ -67,7 +67,7 @@ std::string recvRhubarbLine(rhubarb_socket_t sock, int buff_size = 1024)
     
 }
 
-int sendRhubarbLine(rhubarb_socket_t sock, const char* line)
+inline int sendRhubarbLine(rhubarb_socket_t sock, const char* line)
 {
     std::string _line(line);
     if(line[strlen(line)] != '\n')
@@ -77,13 +77,13 @@ int sendRhubarbLine(rhubarb_socket_t sock, const char* line)
     return send(sock, _line.c_str(), _line.length(), 0);
 }
 
-std::string rhubarbMessage(rhubarb_socket_t sock, const char* message)
+inline std::string rhubarbMessage(rhubarb_socket_t sock, const char* message)
 {
     sendRhubarbLine(sock, message);
     return recvRhubarbLine(sock);
 }
 
-rhubarb_socket_t getRhubarbSocket(const char* hostname,
+inline rhubarb_socket_t getRhubarbSocket(const char* hostname,
                                   int port,
                                   std::string* message = NULL)
 {
@@ -137,7 +137,7 @@ rhubarb_socket_t getRhubarbSocket(const char* hostname,
     return sock;
 }
 
-void closeRhubarbSocket(rhubarb_socket_t sock)
+inline void closeRhubarbSocket(rhubarb_socket_t sock)
 {
 #ifndef WIN32    
     close(sock);
