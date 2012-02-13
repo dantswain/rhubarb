@@ -5,8 +5,8 @@ require 'gserver'
 
 class Rhubarb < GServer
 
-  Shutdown_Command = "S";
-  ClientQuit_Command = "Q";
+  SHUTDOWN = "S"
+  CLIENTQUIT = "Q"
   
   @@verbose = false
   
@@ -280,12 +280,12 @@ class Rhubarb < GServer
 
         puts "GOT:  |" + line + "|\n" unless !@@verbose
 
-        if line == ClientQuit_Command
+        if line == CLIENTQUIT
           io.puts "Goodbye"
           break
         end
 
-        if line == Shutdown_Command
+        if line == SHUTDOWN
           io.puts "Goodbye"
           do_shutdown = true
           break
