@@ -1,29 +1,21 @@
 # Copyright (c) 2011 Daniel T. Swain
 # See the file license.txt for copying permissions
 
-$: << File.expand_path(File.dirname(__FILE__))
-require 'rhubarb.rb'
+$: << File.expand_path('lib', File.dirname(__FILE__))
+require 'rhubarb'
 
 class SampleServer < Rhubarb
 
-  def initialize(*args)
-    super(*args)
+  add_command :name => "hi"
+  add_get_set_command :name => "ultimateAnswer", :setArgs => 1
+  add_indexed_get_set_command :name => "arrayData", :setArgs => 3, :maxIndex => 1
 
-    @ultimateAnswer = 42
-    @arrayData = [[1, 2, 3],[4, 5, 6]];
-    
-    get_set_ultimateanswer = {:name => "ultimateAnswer", :setArgs => 1}
-    get_set_arraydata = {:name => "arrayData", :setArgs => 3, :maxIndex => 1}
-    
-    @commands << {:name => "hi"};
-
-    @get_commands << get_set_ultimateanswer
-    @set_commands << get_set_ultimateanswer
-
-    @indexed_get_commands << get_set_arraydata
-    @indexed_set_commands << get_set_arraydata    
-
+  def self.reset_data
+    @@ultimate_answer = 42
+    @@array_data = [[1, 2, 3],[4, 5, 6]]
   end
+
+  reset_data
 
   def welcomeMessage(args)
     "Welcome, client #{@@client_id}!"
@@ -34,22 +26,22 @@ class SampleServer < Rhubarb
   end
 
   def getUltimateAnswer(args, cmd_def)
-    "The ultimate answer is #{@ultimateAnswer}"
+    "The ultimate answer is #{@@ultimate_answer}"
   end
 
   def setUltimateAnswer(args, cmd_def)
-    @ultimateAnswer = args[2]
+    @@ultimate_answer = args[2]
     getUltimateAnswer(args, cmd_def)
   end
 
   def getArrayData(i)
-    "#{@arrayData[i][0]} #{@arrayData[i][1]} #{@arrayData[i][2]}"
+    "#{@@array_data[i][0]} #{@@array_data[i][1]} #{@@array_data[i][2]}"
   end
   
   def setArrayData(i, args)
-    @arrayData[i][0] = args[0].to_f
-    @arrayData[i][1] = args[1].to_f
-    @arrayData[i][2] = args[2].to_f
+    @@array_data[i][0] = args[0].to_f
+    @@array_data[i][1] = args[1].to_f
+    @@array_data[i][2] = args[2].to_f
     getArrayData(i)
   end    
   
