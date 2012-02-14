@@ -4,7 +4,7 @@
 $: << File.expand_path('lib', File.dirname(__FILE__))
 require 'rhubarb'
 
-class SampleServer < Rhubarb
+class SampleServer < Rhubarb::Server
 
   add_command :name => "hi"
   add_get_set_command :name => "ultimateAnswer", :setArgs => 1

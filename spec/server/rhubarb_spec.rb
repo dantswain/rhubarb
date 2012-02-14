@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-class TestServer < Rhubarb
+class TestServer < Rhubarb::Server
   
   add_get_set_command :name => "foo", :setArgs => 1
   add_indexed_get_set_command :name => "arrayData", :setArgs => 3, :maxIndex => 1
@@ -84,7 +84,7 @@ class TestServer < Rhubarb
 
 end
 
-describe Rhubarb do
+describe Rhubarb::Server do
 
   before(:each) do
     TestServer.reset_data    
