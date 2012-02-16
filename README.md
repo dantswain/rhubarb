@@ -15,45 +15,51 @@ How do I use it?
 
 This is a very simple example, see `sample_server.rb` for a more involved example.  Suppose that you want the value of a variable, let's call it `ultimateAnswer`, to be available for several different programs to get and set.
 
-The first step is to subclass rhubarb, add a class variable to store the value of "ultimateAnswer", and add the command definition
+The first step is to subclass `Rhubarb::Server`, add a class variable to store the value of `ultimateAnswer`, and add the command definition
 
-    class LUEServer < Rhubarb
-     
-      # recommended so that the dat is reset whenever
-      #  we fire up the server
-      def self.reset_data
-        @@ultimateAnswer = 42
-      end
-      reset_data
+```ruby
+class LUEServer < Rhubarb::Server
+ 
+  # recommended so that the dat is reset whenever
+  #  we fire up the server
+  def self.reset_data
+    @@ultimateAnswer = 42
+  end
+  reset_data
 
-      # setArgs is the number of arguments required to set the variable
-      add_get_set_command :name => "ultimateAnswer", :setArgs => 1
+  # setArgs is the number of arguments required to set the variable
+  add_get_set_command :name => "ultimateAnswer", :setArgs => 1
 
-    end
+end
+```
      
 The next step is to add methods telling rhubarb how to respond to get and set commands for ultimateAnswer.  The method name is automatically determined by camel-casing the name of the command and adding the appropriate prefix.  In this case, we need setUltimateAnswer and getUltimateAnswer.  The functions should return a line of text that the server will send back to the user.
 
-    class LUEServer < Rhubarb
-      def getUltimateAnswer(args, cmd_def)
-        "The ultimate answer is #{@@ultimateAnswer}"
-      end
-    
-      def setUltimateAnswer(args, cmd_def)
-        # args[0] is "set" and args[1] is "ultimateAnswer"
-        @@ultimateAnswer = args[2]
-        # delegate to getUltimateAnswer so that the response is standardized
-        getUltimateAnswer(args, cmd_def)
-      end
-    end # finish the class definition
+```ruby
+class LUEServer < Rhubarb
+  def getUltimateAnswer(args, cmd_def)
+    "The ultimate answer is #{@@ultimateAnswer}"
+  end
+
+  def setUltimateAnswer(args, cmd_def)
+    # args[0] is "set" and args[1] is "ultimateAnswer"
+    @@ultimateAnswer = args[2]
+    # delegate to getUltimateAnswer so that the response is standardized
+    getUltimateAnswer(args, cmd_def)
+  end
+end # finish the class definition
+```
 
 These methods need to have two arguments.  The first is the arguments, which is an arry of words from the line that was sent to the server.  In this case, the first two words will be "get ultimateAnswer" or "set ultimateAnswer" - hence the third argument is used to actually set the value.  The second argument is the command definition hash, i.e. {:name => "ultimateAnswer", :setArgs => 1}.
 
 To launch the server, create a new object (the initialization arguments set the port and hostname) and call the start method on it.  The join method will wait for the server to shut down gracefully.
 
-    server = LUEServer.new(1234, '127.0.0.1')
-    server.start
+```ruby
+server = LUEServer.new(1234, '127.0.0.1')
+server.start
 
-    server.join
+server.join
+```
 
 The simplest way to test the server is to run the ruby client in the clients folder.  Each line typed in the client gets sent to the server and the response is reported.
 
