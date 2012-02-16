@@ -36,7 +36,7 @@ end
 The next step is to add methods telling rhubarb how to respond to get and set commands for ultimateAnswer.  The method name is automatically determined by camel-casing the name of the command and adding the appropriate prefix.  In this case, we need setUltimateAnswer and getUltimateAnswer.  The functions should return a line of text that the server will send back to the user.
 
 ```ruby
-class LUEServer < Rhubarb
+class LUEServer < Rhubarb::Server
   def getUltimateAnswer(args, cmd_def)
     "The ultimate answer is #{@@ultimateAnswer}"
   end
