@@ -1,3 +1,4 @@
-require 'rhubarb/server'
-require 'rhubarb/version'
-
+module Rhubarb
+  autoload :Server, 'rhubarb/server'
+  autoload :VERSION, 'rhubarb/version'
+end
