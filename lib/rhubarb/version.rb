@@ -1,5 +1,3 @@
 module Rhubarb
-  module Version
-    STRING = '0.1.0'
-  end
+  VERSION = '0.1.1'
 end
