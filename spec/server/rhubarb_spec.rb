@@ -31,6 +31,8 @@ class TestServer < Rhubarb::Server
     }
 
     @@mode = :mode2
+
+    @@string_foo = "ERR UNSET"
   end
 
   reset_data
@@ -82,6 +84,18 @@ class TestServer < Rhubarb::Server
     getModeData(i)
   end
 
+  # a get/set comman that accepts a string argument
+  add_get_set_command :name => "stringFoo"
+  
+  def getStringFoo(args, cmd_def)
+    "#{@@string_foo}"
+  end
+
+  def setStringFoo(args, cmd_def)
+    @@string_foo = args[2]
+    getStringFoo(args, cmd_def)
+  end
+  
 end
 
 describe Rhubarb::Server do
@@ -204,6 +218,23 @@ describe Rhubarb::Server do
       response_to("get modeData 1 0").should match "b b a a"
     end
     
+  end
+
+  describe "commands with string arguments" do
+    it "should get the default value" do
+      response_to("get stringFoo").should match "ERR"
+    end
+
+    it "should allow us to set the string value" do
+      val = "foo bar baz"
+      response_to("set stringFoo \"#{val}\"").should match val
+    end
+
+    it "should allow us to retrieve the string value" do
+      val = "foo bar baz"
+      response_to("set stringFoo \"#{val}\"").should match val
+      response_to("get stringFoo").should match val
+    end
   end
 
   it "should not time out" do

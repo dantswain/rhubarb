@@ -2,6 +2,7 @@
 # See the file license.txt for copying permissions
 
 require 'gserver'
+require 'csv'
 
 module Rhubarb
   class Server < GServer
@@ -31,6 +32,7 @@ module Rhubarb
     end
 
     def self.add_set_command cmd_def
+      cmd_def[:setArgs] ||= 1
       @@set_commands << cmd_def
     end
 
@@ -293,7 +295,7 @@ module Rhubarb
           end
 
           line = line.downcase
-          words = line.split(" ")
+          words = CSV::parse_line(line, ' ').compact
 
           cmd_def = get_command_from_set(words[0], @@commands)
           responder = get_responder_name_with_prefix(words[0], "respondTo")
