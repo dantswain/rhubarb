@@ -295,7 +295,13 @@ module Rhubarb
           end
 
           line = line.downcase
-          words = CSV::parse_line(line, ' ').compact
+
+	  # the call to CSV::parse_line is different for Ruby 1.9.x
+	  col_sep = ' '
+	  if RUBY_VERSION.split('.')[1].to_i > 8
+	    col_sep = {:col_sep => col_sep}
+	  end
+          words = CSV::parse_line(line, col_sep).compact
 
           cmd_def = get_command_from_set(words[0], @@commands)
           responder = get_responder_name_with_prefix(words[0], "respondTo")
